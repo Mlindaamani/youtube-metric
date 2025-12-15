@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment
+.env
+
+# Generated reports (recommended to ignore – they can be large and are generated on demand)
+reports/*.docx
+!/reports/.gitkeep   # Optional: keep an empty .gitkeep to maintain the folder in git
+
+# Logs
+logs/
+*.log
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache
+.npm
+
+# Optional REPL history
+.node_repl_history
