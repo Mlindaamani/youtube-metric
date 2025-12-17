@@ -15,6 +15,9 @@ import type { AnalyticsData } from "@/modules/youtube/youtube.types.ts";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Get the project root directory more reliably
+const projectRoot = process.cwd();
+
 export const generateDocxReport = async (
   channelTitle: string,
   data: AnalyticsData,
@@ -71,9 +74,13 @@ export const generateDocxReport = async (
     /\s+/g,
     "_"
   )}_${Date.now()}.docx`;
-  const filePath = path.join(__dirname, "../../../reports", filename);
+  // Use absolute path from project root
+  const filePath = path.join(projectRoot, "reports", filename);
+  
+  console.log('Generating report at:', filePath);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, buffer);
-
+  
+  console.log('Report file created successfully');
   return filePath;
 };

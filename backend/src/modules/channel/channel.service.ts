@@ -1,12 +1,7 @@
 
 import Channel from '@/modules/channel/channel.model.ts';
 import { google } from 'googleapis';
-
-const getAuthClient = (refreshToken: string) => {
-  const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({ refresh_token: refreshToken });
-  return oauth2Client;
-};
+import { getAuthClient } from '@/utils/authClient.ts';
 
 export const getChannel = async () => await Channel.findOne();
 

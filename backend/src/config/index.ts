@@ -11,6 +11,6 @@ export const config = {
     redirectUri: process.env.GOOGLE_REDIRECT_URI!,
   },
   sessionSecret: process.env.SESSION_SECRET!,
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  frontendUrl: process.env.FRONTEND_URL
 };
 

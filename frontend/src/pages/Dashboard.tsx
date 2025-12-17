@@ -1,49 +1,26 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store/useStore';
 import { Navbar } from '@/components/Navbar';
 import { ChannelCard } from '@/components/ChannelCard';
 import { ReportGenerationForm } from '@/components/ReportGenerationForm';
 import { ReportsTable } from '@/components/ReportsTable';
-import { Radio } from 'lucide-react';
+import { JobsManager } from '@/components/JobsManager';
 
 export default function Dashboard() {
-  const { isAuthenticated, isLoading, channel, reports, checkAuth, fetchChannel, fetchReports } = useStore();
-  const navigate = useNavigate();
+  const { 
+    auth, 
+    channel, 
+    reports, 
+    fetchChannelInfo, 
+    fetchReports 
+  } = useStore();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  // COMMENTED OUT: Auth redirect for now
-  // useEffect(() => {
-  //   if (!isLoading && !isAuthenticated) {
-  //     navigate('/login');
-  //   }
-  // }, [isAuthenticated, isLoading, navigate]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchChannel();
+    if (auth.isAuthenticated) {
+      fetchChannelInfo();
       fetchReports();
     }
-  }, [isAuthenticated, fetchChannel, fetchReports]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <Radio className="h-12 w-12 text-primary" />
-          <p className="text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // COMMENTED OUT: Auth check for now
-  // if (!isAuthenticated) {
-  //   return null;
-  // }
+  }, [auth.isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -62,22 +39,34 @@ export default function Dashboard() {
               <h1 className="text-3xl font-bold text-foreground">
                 <span className="text-brand">Dashboard</span>
               </h1>
-              <p className="text-muted-foreground mt-1">Monitor your podcast performance and generate reports</p>
+              <p className="text-muted-foreground mt-1">Monitor your YouTube channel performance and generate reports</p>
             </div>
 
             {/* Channel Overview */}
-            {channel ? (
-              <ChannelCard channel={channel} />
-            ) : (
+            {channel.current ? (
+              <ChannelCard channel={channel.current} />
+            ) : channel.loading ? (
               <div className="animate-pulse bg-card/50 backdrop-blur-sm rounded-2xl h-48 border border-brand/20" />
+            ) : (
+              <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-brand/20 text-center">
+                <p className="text-muted-foreground">No channel connected</p>
+              </div>
             )}
 
-            {/* Report Generation & History */}
+            {/* Report Generation & Jobs Management */}
             <div className="grid gap-6 lg:grid-cols-2">
               <ReportGenerationForm />
-              <div className="lg:col-span-2">
-                <ReportsTable reports={reports} />
-              </div>
+              <JobsManager />
+            </div>
+
+            {/* Reports History */}
+            <div className="lg:col-span-2">
+              <ReportsTable reports={reports.reports} />
+            </div>
+
+            {/* Jobs Management */}
+            <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
+              <JobsManager />
             </div>
           </div>
         </main>

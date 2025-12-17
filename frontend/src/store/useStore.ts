@@ -1,148 +1,456 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from 'zustand';
-import { authApi, channelApi, reportApi } from '@/lib/api';
+import { persist } from 'zustand/middleware';
+import { toast } from 'sonner';
+import { authAPI } from '../api/auth';
+import { channelAPI } from '../api/channel';
+import { reportsAPI } from '../api/reports';
+import { jobAPI } from '../api/jobs';
+import { AppState, User, ChannelInfo, Report, ReportGenerationRequest, Job, JobStats, CreateJobRequest } from '../types';
 
-export interface ChannelStats {
-  totalViews: number;
-  subscribers: number;
-  videoCount: number;
-}
-
-export interface Channel {
-  id: string;
-  title: string;
-  customName: string;
-  thumbnailUrl: string;
-  stats: ChannelStats;
-}
-
-export interface Report {
-  id: string;
-  title: string;
-  period: string;
-  generatedAt: string;
-  type: 'manual' | 'scheduled';
-  filename: string;
-}
-
-interface AppState {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  channel: Channel | null;
-  reports: Report[];
-  isGeneratingReport: boolean;
-  
-  // Actions
+interface StoreState extends AppState {
+  // Auth actions
   checkAuth: () => Promise<void>;
+  loginWithGoogle: () => void;
   logout: () => Promise<void>;
-  fetchChannel: () => Promise<void>;
+  setAuthenticated: (value: boolean, user?: User | null) => void;
+
+  // Channel actions
+  fetchChannelInfo: () => Promise<void>;
+  updateChannel: (channelId: string, updateData: any) => Promise<void>;
+  setChannelLoading: (loading: boolean) => void;
+  setChannelError: (error: string | null) => void;
+
+  // Reports actions
   fetchReports: () => Promise<void>;
-  updateCustomName: (name: string) => Promise<void>;
-  generateReport: (params: { period: string; startDate?: string; endDate?: string }) => Promise<void>;
-  scheduleReport: (params: { period: string; frequency: string }) => Promise<void>;
-  setAuthenticated: (value: boolean) => void;
+  generateReport: (params: ReportGenerationRequest) => Promise<void>;
+  scheduleReport: (params: CreateJobRequest) => Promise<void>;
+  downloadReport: (reportId: string, filename: string) => Promise<void>;
+  deleteReport: (reportId: string) => Promise<void>;
+  setReportsLoading: (loading: boolean) => void;
+  setReportsError: (error: string | null) => void;
+  setGenerating: (generating: boolean) => void;
+
+  // Jobs actions
+  fetchJobs: () => Promise<void>;
+  createJob: (jobData: CreateJobRequest) => Promise<void>;
+  cancelJob: (jobId: string) => Promise<void>;
+  toggleJobStatus: (jobId: string, isActive: boolean) => Promise<void>;
+  fetchJobStats: () => Promise<void>;
+  setJobsLoading: (loading: boolean) => void;
+  setJobsError: (error: string | null) => void;
+  setCreating: (creating: boolean) => void;
 }
 
-export const useStore = create<AppState>((set, get) => ({
-  isAuthenticated: false,
-  isLoading: true,
-  channel: null,
-  reports: [],
-  isGeneratingReport: false,
-
-  checkAuth: async () => {
-    // MOCK: Check if user has logged out (don't auto-authenticate if logged out)
-    const currentState = get();
-    if (currentState.isLoading) {
-      // First load - don't auto-authenticate, let user go to login
-      set({ isAuthenticated: false, isLoading: false });
-    }
-  },
-
-  logout: async () => {
-    set({ isAuthenticated: false, isLoading: false, channel: null, reports: [] });
-  },
-
-  fetchChannel: async () => {
-    // MOCK: Return demo channel data
-    set({
+export const useStore = create<StoreState>()(
+  persist(
+    (set, get) => ({
+      // Initial state
+      auth: {
+        isAuthenticated: false,
+        user: null,
+        loading: false,
+      },
       channel: {
-        id: 'UC123456789',
-        title: 'Thinker & Builder',
-        customName: 'Thinker & Builder',
-        thumbnailUrl: 'https://yt3.ggpht.com/ytc/AIdro_kVKPpQv4Z2EFNQFmRwb7gfXJVVGUqKHLVwA2ydZw=s800',
-        stats: {
-          totalViews: 1250000,
-          subscribers: 45200,
-          videoCount: 156
-        }
-      }
-    });
-  },
+        current: null,
+        loading: false,
+        error: null,
+      },
+      reports: {
+        reports: [],
+        loading: false,
+        error: null,
+        generating: false,
+      },
+      jobs: {
+        jobs: [],
+        stats: null,
+        loading: false,
+        error: null,
+        creating: false,
+      },
 
-  fetchReports: async () => {
-    // MOCK: Return demo reports
-    set({
-      reports: [
-        {
-          id: '1',
-          title: 'Q4 2024 Performance Report',
-          period: 'Oct 1 - Dec 31, 2024',
-          generatedAt: '2024-12-10T14:30:00Z',
-          type: 'manual',
-          filename: 'thinker-builder-q4-2024.docx'
-        },
-        {
-          id: '2',
-          title: 'November 2024 Monthly Report',
-          period: 'Nov 1 - Nov 30, 2024',
-          generatedAt: '2024-12-01T09:00:00Z',
-          type: 'scheduled',
-          filename: 'thinker-builder-nov-2024.docx'
-        },
-        {
-          id: '3',
-          title: 'Full Channel History Report',
-          period: 'Full History',
-          generatedAt: '2024-11-15T16:45:00Z',
-          type: 'manual',
-          filename: 'thinker-builder-full-history.docx'
+      // Auth actions
+      checkAuth: async () => {
+        try {
+          set(state => ({ auth: { ...state.auth, loading: true } }));
+          const authStatus = await authAPI.getStatus();
+          // Only log once per session to prevent spam
+          if (!get().auth.isAuthenticated && authStatus.isAuthenticated) {
+            console.log('Authentication successful:', authStatus);
+          }
+          set(state => ({ 
+            auth: { 
+              ...state.auth, 
+              isAuthenticated: authStatus.isAuthenticated,
+              user: authStatus.user,
+              loading: false 
+            } 
+          }));
+        } catch (error: any) {
+          console.error('Auth check failed:', error);
+          set(state => ({ 
+            auth: { 
+              ...state.auth, 
+              isAuthenticated: false, 
+              user: null, 
+              loading: false 
+            } 
+          }));
         }
-      ]
-    });
-  },
+      },
 
-  updateCustomName: async (customName: string) => {
-    const channel = get().channel;
-    if (channel) {
-      set({ channel: { ...channel, customName } });
+      loginWithGoogle: () => {
+        authAPI.loginWithGoogle();
+      },
+
+      logout: async () => {
+        try {
+          await authAPI.logout();
+          set(state => ({
+            auth: { 
+              ...state.auth, 
+              isAuthenticated: false, 
+              user: null 
+            },
+            channel: {
+              current: null,
+              loading: false,
+              error: null,
+            },
+            reports: {
+              reports: [],
+              loading: false,
+              error: null,
+              generating: false,
+            },
+            jobs: {
+              jobs: [],
+              stats: null,
+              loading: false,
+              error: null,
+              creating: false,
+            },
+          }));
+          toast.success('Logged out successfully');
+        } catch (error: any) {
+          toast.error('Logout failed');
+          console.error('Logout error:', error);
+        }
+      },
+
+      setAuthenticated: (value: boolean, user: User | null = null) => {
+        set(state => ({ 
+          auth: { 
+            ...state.auth, 
+            isAuthenticated: value, 
+            user 
+          } 
+        }));
+      },
+
+      // Channel actions
+      fetchChannelInfo: async () => {
+        try {
+          set(state => ({ channel: { ...state.channel, loading: true, error: null } }));
+          const channelInfo = await channelAPI.getInfo();
+          set(state => ({ 
+            channel: { 
+              ...state.channel, 
+              current: channelInfo, 
+              loading: false 
+            } 
+          }));
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to fetch channel info';
+          set(state => ({ 
+            channel: { 
+              ...state.channel, 
+              loading: false, 
+              error: errorMessage 
+            } 
+          }));
+          if (error.response?.status !== 404) {
+            toast.error(errorMessage);
+          }
+        }
+      },
+
+      updateChannel: async (channelId: string, updateData: any) => {
+        try {
+          const updatedChannel = await channelAPI.updateChannel(channelId, updateData);
+          set(state => ({
+            channel: {
+              ...state.channel,
+              current: state.channel.current ? {
+                ...state.channel.current,
+                ...updatedChannel
+              } : null
+            }
+          }));
+          toast.success('Channel updated successfully');
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to update channel';
+          toast.error(errorMessage);
+          throw error;
+        }
+      },
+
+      setChannelLoading: (loading: boolean) => {
+        set(state => ({ channel: { ...state.channel, loading } }));
+      },
+
+      setChannelError: (error: string | null) => {
+        set(state => ({ channel: { ...state.channel, error } }));
+      },
+
+      // Reports actions
+      fetchReports: async () => {
+        try {
+          set(state => ({ reports: { ...state.reports, loading: true, error: null } }));
+          const reports = await reportsAPI.getAll();
+          set(state => ({ 
+            reports: { 
+              ...state.reports, 
+              reports, 
+              loading: false 
+            } 
+          }));
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to fetch reports';
+          set(state => ({ 
+            reports: { 
+              ...state.reports, 
+              loading: false, 
+              error: errorMessage 
+            } 
+          }));
+          toast.error(errorMessage);
+        }
+      },
+
+      generateReport: async (params: ReportGenerationRequest) => {
+        try {
+          set(state => ({ reports: { ...state.reports, generating: true, error: null } }));
+          const newReport = await reportsAPI.generate(params);
+          set(state => ({
+            reports: {
+              ...state.reports,
+              reports: [newReport, ...state.reports.reports],
+              generating: false
+            }
+          }));
+          toast.success('Report generated successfully!');
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to generate report';
+          set(state => ({ 
+            reports: { 
+              ...state.reports, 
+              generating: false, 
+              error: errorMessage 
+            } 
+          }));
+          toast.error(errorMessage);
+          throw error;
+        }
+      },
+
+      scheduleReport: async (params: CreateJobRequest) => {
+        try {
+          set(state => ({ jobs: { ...state.jobs, creating: true, error: null } }));
+          const newJob = await jobAPI.create(params);
+          set(state => ({
+            jobs: {
+              ...state.jobs,
+              jobs: [newJob, ...state.jobs.jobs],
+              creating: false
+            }
+          }));
+          toast.success(`Report scheduled to run ${params.frequency}!`);
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to schedule report';
+          set(state => ({ 
+            jobs: { 
+              ...state.jobs, 
+              creating: false, 
+              error: errorMessage 
+            } 
+          }));
+          toast.error(errorMessage);
+          throw error;
+        }
+      },
+
+      downloadReport: async (reportId: string, filename: string) => {
+        try {
+          const blob = await reportsAPI.download(reportId);
+          
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          toast.success('Report downloaded successfully!');
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to download report';
+          toast.error(errorMessage);
+        }
+      },
+
+      deleteReport: async (reportId: string) => {
+        try {
+          await reportsAPI.delete(reportId);
+          set(state => ({
+            reports: {
+              ...state.reports,
+              reports: state.reports.reports.filter(report => report._id !== reportId)
+            }
+          }));
+          toast.success('Report deleted successfully');
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to delete report';
+          toast.error(errorMessage);
+        }
+      },
+
+      setReportsLoading: (loading: boolean) => {
+        set(state => ({ reports: { ...state.reports, loading } }));
+      },
+
+      setReportsError: (error: string | null) => {
+        set(state => ({ reports: { ...state.reports, error } }));
+      },
+
+      setGenerating: (generating: boolean) => {
+        set(state => ({ reports: { ...state.reports, generating } }));
+      },
+
+      // Jobs actions
+      fetchJobs: async () => {
+        try {
+          set(state => ({ jobs: { ...state.jobs, loading: true, error: null } }));
+          const jobs = await jobAPI.getAll();
+          set(state => ({ 
+            jobs: { 
+              ...state.jobs, 
+              jobs, 
+              loading: false 
+            } 
+          }));
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to fetch jobs';
+          set(state => ({ 
+            jobs: { 
+              ...state.jobs, 
+              loading: false, 
+              error: errorMessage 
+            } 
+          }));
+          toast.error(errorMessage);
+        }
+      },
+
+      createJob: async (jobData: CreateJobRequest) => {
+        try {
+          set(state => ({ jobs: { ...state.jobs, creating: true, error: null } }));
+          const newJob = await jobAPI.create(jobData);
+          set(state => ({
+            jobs: {
+              ...state.jobs,
+              jobs: [newJob, ...state.jobs.jobs],
+              creating: false
+            }
+          }));
+          toast.success('Job created successfully!');
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to create job';
+          set(state => ({ 
+            jobs: { 
+              ...state.jobs, 
+              creating: false, 
+              error: errorMessage 
+            } 
+          }));
+          toast.error(errorMessage);
+          throw error;
+        }
+      },
+
+      cancelJob: async (jobId: string) => {
+        try {
+          await jobAPI.cancel(jobId);
+          set(state => ({
+            jobs: {
+              ...state.jobs,
+              jobs: state.jobs.jobs.filter(job => job._id !== jobId)
+            }
+          }));
+          toast.success('Job cancelled successfully');
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to cancel job';
+          toast.error(errorMessage);
+        }
+      },
+
+      toggleJobStatus: async (jobId: string, isActive: boolean) => {
+        try {
+          const updatedJob = await jobAPI.updateStatus(jobId, isActive);
+          set(state => ({
+            jobs: {
+              ...state.jobs,
+              jobs: state.jobs.jobs.map(job =>
+                job._id === jobId ? updatedJob : job
+              )
+            }
+          }));
+          toast.success(`Job ${isActive ? 'activated' : 'deactivated'} successfully`);
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to update job status';
+          toast.error(errorMessage);
+        }
+      },
+
+      fetchJobStats: async () => {
+        try {
+          const stats = await jobAPI.getStats();
+          set(state => ({ 
+            jobs: { 
+              ...state.jobs, 
+              stats 
+            } 
+          }));
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Failed to fetch job statistics';
+          console.error('Job stats error:', errorMessage);
+        }
+      },
+
+      setJobsLoading: (loading: boolean) => {
+        set(state => ({ jobs: { ...state.jobs, loading } }));
+      },
+
+      setJobsError: (error: string | null) => {
+        set(state => ({ jobs: { ...state.jobs, error } }));
+      },
+
+      setCreating: (creating: boolean) => {
+        set(state => ({ jobs: { ...state.jobs, creating } }));
+      },
+    }),
+    {
+      name: 'yt-metrics-store',
+      partialize: (state) => ({
+        auth: {
+          isAuthenticated: state.auth.isAuthenticated,
+          user: state.auth.user,
+          loading: false, // Don't persist loading state
+        },
+      }),
     }
-  },
-
-  generateReport: async (params) => {
-    set({ isGeneratingReport: true });
-    // MOCK: Simulate report generation delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const newReport = {
-      id: Date.now().toString(),
-      title: `${params.period} Report`,
-      period: params.startDate && params.endDate 
-        ? `${params.startDate} - ${params.endDate}` 
-        : params.period,
-      generatedAt: new Date().toISOString(),
-      type: 'manual' as const,
-      filename: `thinker-builder-${Date.now()}.docx`
-    };
-    set(state => ({ 
-      reports: [newReport, ...state.reports],
-      isGeneratingReport: false 
-    }));
-  },
-
-  scheduleReport: async (params) => {
-    // MOCK: Simulate scheduling
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('Scheduled report:', params);
-  },
-
-  setAuthenticated: (value: boolean) => set({ isAuthenticated: value }),
-}));
+  )
+);

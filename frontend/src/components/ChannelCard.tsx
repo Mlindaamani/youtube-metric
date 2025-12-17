@@ -2,32 +2,36 @@ import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useStore, Channel } from '@/store/useStore';
+import { useStore } from '@/store/useStore';
+import { ChannelInfo } from '@/types';
 import { Eye, Users, Video, Pencil, Check, X, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ChannelCardProps {
-  channel: Channel;
+  channel: ChannelInfo;
 }
 
-const StatItem = ({ icon: Icon, value, label }: { icon: React.ElementType; value: number; label: string }) => (
-  <div className="flex flex-col items-center p-3 sm:p-4 rounded-xl bg-secondary/50 transition-all duration-200 hover:bg-secondary min-w-0">
-    <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-brand mb-1 sm:mb-2" />
-    <span className="text-lg sm:text-2xl font-bold text-foreground truncate">{value.toLocaleString()}</span>
-    <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider text-center">{label}</span>
-  </div>
-);
+const StatItem = ({ icon: Icon, value, label }: { icon: React.ElementType; value: string | number; label: string }) => {
+  const numValue = typeof value === 'string' ? parseInt(value, 10) || 0 : value;
+  return (
+    <div className="flex flex-col items-center p-3 sm:p-4 rounded-xl bg-secondary/50 transition-all duration-200 hover:bg-secondary min-w-0">
+      <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-brand mb-1 sm:mb-2" />
+      <span className="text-lg sm:text-2xl font-bold text-foreground truncate">{numValue.toLocaleString()}</span>
+      <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider text-center">{label}</span>
+    </div>
+  );
+};
 
 export function ChannelCard({ channel }: ChannelCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [customName, setCustomName] = useState(channel.customName || channel.title);
-  const [logoUrl, setLogoUrl] = useState(channel.thumbnailUrl);
+  const [logoUrl, setLogoUrl] = useState(channel.thumbnailUrl || channel.liveStats?.thumbnailUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const updateCustomName = useStore((state) => state.updateCustomName);
+  const { updateChannel } = useStore();
 
   const handleSave = async () => {
     try {
-      await updateCustomName(customName);
+      await updateChannel(channel.channelId, { customName });
       setIsEditing(false);
       toast.success('Channel name updated successfully');
     } catch {
@@ -117,9 +121,9 @@ export function ChannelCard({ channel }: ChannelCardProps) {
         </div>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4 sm:mt-6">
-          <StatItem icon={Eye} value={channel.stats.totalViews} label="Views" />
-          <StatItem icon={Users} value={channel.stats.subscribers} label="Subs" />
-          <StatItem icon={Video} value={channel.stats.videoCount} label="Videos" />
+          <StatItem icon={Eye} value={channel.liveStats?.viewCount || '0'} label="Views" />
+          <StatItem icon={Users} value={channel.liveStats?.subscriberCount || '0'} label="Subs" />
+          <StatItem icon={Video} value={channel.liveStats?.videoCount || '0'} label="Videos" />
         </div>
       </CardContent>
     </Card>

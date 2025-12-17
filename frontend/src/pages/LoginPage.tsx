@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useStore } from '@/store/useStore';
@@ -14,26 +14,30 @@ const features = [
 ];
 
 export default function LoginPage() {
-  const { isAuthenticated, isLoading, checkAuth } = useStore();
+  const { auth, checkAuth } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Get the intended destination from location state, default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate('/dashboard');
+    if (!auth.loading && auth.isAuthenticated) {
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [auth.isAuthenticated, auth.loading, navigate, from]);
 
   const handleLogin = () => {
     setIsRedirecting(true);
     window.location.href = authApi.getGoogleAuthUrl();
   };
 
-  if (isLoading) {
+  if (auth.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse">

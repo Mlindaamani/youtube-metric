@@ -12,7 +12,7 @@ passport.use(
       clientID: config.google.clientId,
       clientSecret: config.google.clientSecret,
       callbackURL: config.google.redirectUri,
-      scope: ['profile', 'email', 'https://www.googleapis.com/auth/youtube.readonly'],
+      scope: ['profile', 'email', 'https://www.googleapis.com/auth/youtube.readonly']
     },
     (accessToken: string, refreshToken: string, profile: any, done: (err: any, user?: any) => void) => {
       return done(null, { accessToken, refreshToken, profile });
@@ -27,7 +27,8 @@ const router = express.Router();
 
 router.get('/status', getAuthStatus);
 router.get('/google', passport.authenticate('google', {
-  accessType: 'online',
+  scope: ['profile', 'email', 'https://www.googleapis.com/auth/youtube.readonly'],
+  accessType: 'offline',
   prompt: 'consent'
 }));
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), authCallbackHandler);

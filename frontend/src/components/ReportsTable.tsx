@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Report } from '@/store/useStore';
-import { reportApi } from '@/lib/api';
+import { Report } from '@/types';
+import { reportsAPI } from '@/api/reports';
 import { History, Download, Clock, FileText, Search, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -24,14 +24,14 @@ export function ReportsTable({ reports }: ReportsTableProps) {
       (report) =>
         report.title.toLowerCase().includes(query) ||
         report.period.toLowerCase().includes(query) ||
-        report.type.toLowerCase().includes(query)
+        report.generatedBy.toLowerCase().includes(query)
     );
   }, [reports, searchQuery]);
 
   // Chart data
   const typeDistribution = useMemo(() => {
-    const manual = reports.filter(r => r.type === 'manual').length;
-    const scheduled = reports.filter(r => r.type === 'scheduled').length;
+    const manual = reports.filter(r => r.generatedBy === 'manual').length;
+    const scheduled = reports.filter(r => r.generatedBy === 'scheduled').length;
     return [
       { name: 'Manual', value: manual },
       { name: 'Scheduled', value: scheduled },
@@ -58,8 +58,21 @@ export function ReportsTable({ reports }: ReportsTableProps) {
     });
   };
 
-  const handleDownload = (id: string) => {
-    window.open(reportApi.download(id), '_blank');
+  const handleDownload = async (id: string) => {
+    try {
+      const blob = await reportsAPI.download(id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `report-${id}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
   };
 
   return (
@@ -193,7 +206,7 @@ export function ReportsTable({ reports }: ReportsTableProps) {
                   <tbody>
                     {filteredReports.map((report, index) => (
                       <tr 
-                        key={report.id} 
+                        key={report._id} 
                         className="border-b border-border/20 last:border-0 hover:bg-brand/5 transition-colors"
                         style={{ animationDelay: `${index * 0.05}s` }}
                       >
@@ -214,17 +227,17 @@ export function ReportsTable({ reports }: ReportsTableProps) {
                         </td>
                         <td className="py-4 px-4">
                           <Badge 
-                            variant={report.type === 'manual' ? 'secondary' : 'outline'}
-                            className={report.type === 'scheduled' ? 'border-brand/30 text-brand' : ''}
+                            variant={report.generatedBy === 'manual' ? 'secondary' : 'outline'}
+                            className={report.generatedBy === 'scheduled' ? 'border-brand/30 text-brand' : ''}
                           >
-                            {report.type}
+                            {report.generatedBy}
                           </Badge>
                         </td>
                         <td className="py-4 px-4 text-right">
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => handleDownload(report.id)}
+                            onClick={() => handleDownload(report._id)}
                           >
                             <Download className="h-4 w-4" />
                             Download
@@ -240,7 +253,7 @@ export function ReportsTable({ reports }: ReportsTableProps) {
               <div className="md:hidden space-y-3">
                 {filteredReports.map((report) => (
                   <div 
-                    key={report.id}
+                    key={report._id}
                     className="p-4 rounded-xl bg-background/30 border border-brand/20 hover:border-brand/40 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-3">
@@ -254,10 +267,10 @@ export function ReportsTable({ reports }: ReportsTableProps) {
                         </div>
                       </div>
                       <Badge 
-                        variant={report.type === 'manual' ? 'secondary' : 'outline'}
-                        className={report.type === 'scheduled' ? 'border-brand/30 text-brand' : ''}
+                        variant={report.generatedBy === 'manual' ? 'secondary' : 'outline'}
+                        className={report.generatedBy === 'scheduled' ? 'border-brand/30 text-brand' : ''}
                       >
-                        {report.type}
+                        {report.generatedBy}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
@@ -268,7 +281,7 @@ export function ReportsTable({ reports }: ReportsTableProps) {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => handleDownload(report.id)}
+                        onClick={() => handleDownload(report._id)}
                       >
                         <Download className="h-4 w-4" />
                         Download

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useStore } from '@/store/useStore';
+import { ReportGenerationRequest } from '@/types';
 import { FileText, Calendar, Loader2, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,11 +30,14 @@ export function ReportGenerationForm() {
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduleFrequency, setScheduleFrequency] = useState('weekly');
   
-  const { generateReport, isGeneratingReport, scheduleReport } = useStore();
+  const { reports, jobs, generateReport, scheduleReport } = useStore();
 
   const handleGenerate = async () => {
     try {
-      const params: { period: string; startDate?: string; endDate?: string } = { period };
+      const params: ReportGenerationRequest = { 
+        period, 
+        generatedBy: 'manual' as const
+      };
       
       if (period === 'custom') {
         if (!startDate || !endDate) {
@@ -53,8 +57,18 @@ export function ReportGenerationForm() {
 
   const handleSchedule = async () => {
     try {
-      await scheduleReport({ period, frequency: scheduleFrequency });
-      toast.success(`Report scheduled ${scheduleFrequency}!`);
+      const jobParams = {
+        name: `${scheduleFrequency.charAt(0).toUpperCase() + scheduleFrequency.slice(1)} Report - ${period}`,
+        frequency: scheduleFrequency as 'daily' | 'weekly' | 'monthly',
+        period,
+        parameters: {
+          period,
+          metrics: ['views', 'subscribers', 'revenue'],
+          reportType: 'comprehensive'
+        }
+      };
+
+      await scheduleReport(jobParams);
     } catch {
       toast.error('Failed to schedule report. Please try again.');
     }
@@ -69,7 +83,7 @@ export function ReportGenerationForm() {
           </div>
           <div>
             <CardTitle>Generate Report</CardTitle>
-            <CardDescription>Create a performance report for your podcast</CardDescription>
+            <CardDescription>Create a performance report for your YouTube channel</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -157,20 +171,30 @@ export function ReportGenerationForm() {
         {isScheduled ? (
           <Button 
             onClick={handleSchedule} 
+            disabled={jobs.creating}
             className="w-full bg-brand hover:bg-brand/90 text-brand-foreground"
             size="lg"
           >
-            <Clock className="h-4 w-4" />
-            Schedule {scheduleFrequency.charAt(0).toUpperCase() + scheduleFrequency.slice(1)} Report
+            {jobs.creating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Scheduling Report...
+              </>
+            ) : (
+              <>
+                <Clock className="h-4 w-4" />
+                Schedule {scheduleFrequency.charAt(0).toUpperCase() + scheduleFrequency.slice(1)} Report
+              </>
+            )}
           </Button>
         ) : (
           <Button 
             onClick={handleGenerate} 
-            disabled={isGeneratingReport}
+            disabled={reports.loading}
             className="w-full"
             size="lg"
           >
-            {isGeneratingReport ? (
+            {reports.loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Generating Report...

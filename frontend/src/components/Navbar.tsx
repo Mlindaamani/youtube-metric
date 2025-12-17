@@ -22,8 +22,8 @@ export function Navbar() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">Thinker<span className="text-brand">&</span>Builder</h1>
-              {channel && (
-                <p className="text-xs text-muted-foreground">{channel.customName || channel.title}</p>
+              {channel.current && (
+                <p className="text-xs text-muted-foreground">{channel.current.customName || channel.current.title}</p>
               )}
             </div>
           </div>

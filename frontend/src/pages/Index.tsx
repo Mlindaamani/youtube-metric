@@ -6,24 +6,24 @@ import { Radio, ChartLine, FileText, Zap, ArrowRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
-  const { checkAuth, isAuthenticated, isLoading } = useStore();
+  const { auth, checkAuth } = useStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
+    if (!auth.loading) {
+      if (auth.isAuthenticated) {
         navigate("/dashboard");
       } else {
         navigate("/login");
       }
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [auth.isAuthenticated, auth.loading, navigate]);
 
-  if (isLoading) {
+  if (auth.loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -77,11 +77,11 @@ const Index = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in"
             style={{ animationDelay: "0.3s" }}
           >
-            <Button size="lg" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/login")} className="group">
-              {isAuthenticated ? "Go to Dashboard" : "Get Started"}
+            <Button size="lg" onClick={() => navigate(auth.isAuthenticated ? "/dashboard" : "/login")} className="group">
+              {auth.isAuthenticated ? "Go to Dashboard" : "Get Started"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-            {isAuthenticated && (
+            {auth.isAuthenticated && (
               <Button variant="outline" size="lg" onClick={() => navigate("/dashboard")}>
                 View Reports
               </Button>
