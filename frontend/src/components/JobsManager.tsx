@@ -28,7 +28,7 @@ export function JobsManager() {
       fetchJobStats();
       setHasInitialized(true);
     }
-  }, []);
+  }, [fetchJobStats, fetchJobs, hasInitialized]);
 
   useEffect(() => {
     // Ensure jobs is an array before setting

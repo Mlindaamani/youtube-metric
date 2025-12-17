@@ -13,7 +13,7 @@ interface ReportsState {
 }
 
 interface ReportsActions {
-  fetchReports: () => Promise<void>;
+  fetchReports: (force?: boolean) => Promise<void>;
   generateReport: (params: ReportGenerationRequest) => Promise<void>;
   downloadReport: (reportId: string, filename: string) => Promise<void>;
   deleteReport: (reportId: string) => Promise<void>;
@@ -34,12 +34,12 @@ export const useReportsStore = create<ReportsStore>((set, get) => ({
   lastFetchTime: 0,
 
   // Actions
-  fetchReports: async () => {
+  fetchReports: async (force = false) => {
     const state = get();
     const now = Date.now();
     
-    // Prevent duplicate calls within 10 seconds
-    if (state.loading || (now - state.lastFetchTime) < 10000) {
+    // Prevent duplicate calls within 10 seconds unless force is true
+    if (state.loading || (!force && (now - state.lastFetchTime) < 10000)) {
       return;
     }
     

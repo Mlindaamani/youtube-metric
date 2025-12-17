@@ -31,7 +31,11 @@ const scheduleOptions = [
   { value: 'monthly', label: 'Monthly' },
 ];
 
-export function ReportGenerationForm() {
+interface ReportGenerationFormProps {
+  onReportGenerated?: () => void;
+}
+
+export function ReportGenerationForm({ onReportGenerated }: ReportGenerationFormProps) {
   const [period, setPeriod] = useState('last12months');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -65,6 +69,8 @@ export function ReportGenerationForm() {
 
       await generateReport(params);
       toast.success('Report generated successfully!');
+      // Call the callback to navigate to reports tab
+      onReportGenerated?.();
     } catch {
       toast.error('Failed to generate report. Please try again.');
     } finally {

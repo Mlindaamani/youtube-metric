@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useChannelStore } from '@/store/channelStore';
 import { useReportsStore } from '@/store/reportsStore';
@@ -11,6 +11,7 @@ export default function Dashboard() {
   const { isAuthenticated } = useAuthStore();
   const { current: channel, fetchChannelInfo } = useChannelStore();
   const { reports, fetchReports } = useReportsStore();
+  const [activeTab, setActiveTab] = useState('reports');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -44,7 +45,7 @@ export default function Dashboard() {
             )}
 
             {/* Dashboard Tabs */}
-            <DashboardTabs reports={reports} />
+            <DashboardTabs reports={reports} activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
         </main>
       </div>

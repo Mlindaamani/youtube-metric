@@ -3,11 +3,11 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Report } from '@/types';
-import { reportsAPI } from '@/api/reports';
 import { History, Download, Clock, FileText, Search, Trash2, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useReportsStore } from '@/store/reportsStore';
+import { reportsAPI } from '@/api/reports';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,7 @@ export function ReportsTable({ reports }: ReportsTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState<string | null>(null);
-  const { fetchReports } = useReportsStore();
+  const { deleteReport } = useReportsStore();
 
   const filteredReports = useMemo(() => {
     if (!searchQuery.trim()) return reports;
@@ -78,10 +78,8 @@ export function ReportsTable({ reports }: ReportsTableProps) {
 
     setDeletingId(reportToDelete);
     try {
-      await reportsAPI.delete(reportToDelete);
+      await deleteReport(reportToDelete);
       toast.success('Report deleted successfully');
-      // Refresh the reports list
-      await fetchReports();
     } catch (error) {
       console.error('Delete failed:', error);
       toast.error('Failed to delete report');

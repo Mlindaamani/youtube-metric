@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChannelStore } from '@/store/channelStore';
 import { ChannelInfo } from '@/types';
-import { Eye, Users, Video, Pencil, Check, X, Camera } from 'lucide-react';
+import { Eye, Users, Video, Pencil, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ChannelCardProps {
@@ -25,9 +25,40 @@ const StatItem = ({ icon: Icon, value, label }: { icon: React.ElementType; value
 export function ChannelCard({ channel }: ChannelCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [customName, setCustomName] = useState(channel.customName || channel.title);
-  const [logoUrl, setLogoUrl] = useState(channel.thumbnailUrl || channel.liveStats?.thumbnailUrl || '');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { updateChannel } = useChannelStore();
+  const { loading } = useChannelStore();
+
+  // Show skeleton loader while loading
+  if (loading) {
+    return (
+      <Card className="overflow-hidden animate-slide-up border-brand/20 bg-gradient-to-br from-card to-card/80 dark:from-slate-950 dark:to-slate-900/80 backdrop-blur-sm shadow-lg">
+        <div className="gradient-hero h-20 sm:h-24 bg-gradient-to-r from-blue-500 via-purple-500 to-brand" />
+        <CardContent className="relative pt-0 px-4 sm:px-6">
+          {/* Logo skeleton */}
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-card -mt-10 sm:-mt-12 bg-slate-200 dark:bg-slate-700 animate-pulse" />
+
+          {/* Title skeleton */}
+          <div className="mt-4 space-y-2">
+            <div className="h-8 w-48 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+            <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
+          </div>
+
+          {/* Stats skeleton */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-3 sm:p-4 rounded-xl bg-slate-200 dark:bg-slate-700 animate-pulse min-h-20" />
+            ))}
+          </div>
+
+          {/* Loading indicator */}
+          <div className="flex items-center justify-center mt-6 gap-2 py-4">
+            <Loader2 className="h-5 w-5 text-brand animate-spin" />
+            <span className="text-sm text-muted-foreground">Loading channel data...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleSave = async () => {
     try {
@@ -44,46 +75,16 @@ export function ChannelCard({ channel }: ChannelCardProps) {
     setIsEditing(false);
   };
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image must be less than 5MB');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setLogoUrl(result);
-        toast.success('Logo updated successfully');
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <Card className="overflow-hidden animate-slide-up border-brand/20 bg-gradient-to-br from-card to-card/80 dark:from-slate-950 dark:to-slate-900/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow">
       <div className="gradient-hero h-20 sm:h-24 bg-gradient-to-r from-blue-500 via-purple-500 to-brand" />
       <CardContent className="relative pt-0 px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-4 -mt-10 sm:-mt-12">
-          <div className="relative group">
+          <div className="relative">
             <img
-              src={logoUrl}
+              src={channel.thumbnailUrl || channel.liveStats?.thumbnailUrl || ''}
               alt={channel.title}
               className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-card shadow-elevated object-cover"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-            >
-              <Camera className="h-6 w-6 text-white" />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleLogoChange}
-              className="hidden"
             />
             <div className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand flex items-center justify-center">
               <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-brand-foreground" />
