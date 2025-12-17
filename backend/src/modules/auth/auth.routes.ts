@@ -1,7 +1,7 @@
 
 import express from 'express';
 import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import { config } from '@/config/index.ts';
 import { authCallbackHandler, getAuthStatus, logout } from '@/modules/auth/auth.controller.ts';
 
@@ -27,7 +27,7 @@ const router = express.Router();
 
 router.get('/status', getAuthStatus);
 router.get('/google', passport.authenticate('google', {
-  accessType: 'offline',
+  accessType: 'online',
   prompt: 'consent'
 }));
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), authCallbackHandler);
