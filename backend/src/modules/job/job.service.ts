@@ -123,13 +123,10 @@ class JobService {
   async initializeJobs(): Promise<void> {
     try {
       const activeJobs = await Job.find({ isActive: true });
-      console.log(`Loading ${activeJobs.length} scheduled jobs...`);
-
       for (const job of activeJobs) {
         await this.scheduleJob(job);
       }
 
-      console.log("All scheduled jobs loaded successfully");
     } catch (error) {
       console.error("Error initializing jobs:", error);
     }
@@ -156,9 +153,6 @@ class JobService {
       // Store reference for later management
       this.scheduledJobs.set(job._id.toString(), task);
 
-      console.log(
-        `Scheduled job: ${job.name} (${job.frequency}) - Next run: ${job.nextRun}`
-      );
     } catch (error) {
       console.error(`Error scheduling job ${job._id}:`, error);
     }

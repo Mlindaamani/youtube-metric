@@ -25,13 +25,6 @@ export const authCallbackHandler = async (req: Request, res: Response) => {
 };
 
 export const getAuthStatus = (req: Request, res: Response) => {
-  console.log("Auth status check:", {
-    isAuthenticated: req.isAuthenticated(),
-    hasUser: !!req.user,
-    sessionID: req.sessionID,
-    cookies: req.headers.cookie,
-  });
-
   res.json({
     isAuthenticated: req.isAuthenticated(),
     user: req.user || null,

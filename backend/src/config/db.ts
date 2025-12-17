@@ -1,31 +1,36 @@
-import { MongoClient } from "mongodb";
-import { config } from "@/config/index.ts";
-
-const uri = config.mongoUri;
+import mongoose from 'mongoose';
+import { config } from '@/config/index.ts';
 
 declare global {
-  var _mongoClientPromise: Promise<MongoClient>;
+  var _mongoosePromise: Promise<typeof mongoose> | undefined;
 }
 
-class Singleton {
-  private static _instance: Singleton;
-  private client: MongoClient;
-  private clientPromise: Promise<MongoClient>;
+class Database {
+  private static _instance: Database;
+  private connectionPromise: Promise<typeof mongoose>;
+
   private constructor() {
-    this.client = new MongoClient(uri);
-    this.clientPromise = this.client.connect();
-    if (config.environment === "development") {
-      global._mongoClientPromise = this.clientPromise;
+    this.connectionPromise = mongoose.connect(config.mongoUri, {
+      bufferCommands: false,
+      maxPoolSize: 10,
+    });
+
+    // Prevent multiple connections in development
+    if (config.environment === 'development') {
+      global._mongoosePromise = this.connectionPromise;
     }
   }
 
-  public static get instance() {
+  public static get instance(): Promise<typeof mongoose> {
     if (!this._instance) {
-      this._instance = new Singleton();
+      this._instance = new Database();
     }
-    return this._instance.clientPromise;
+    return this._instance.connectionPromise;
+  }
+
+  public static async disconnect(): Promise<void> {
+    await mongoose.disconnect();
   }
 }
-const clientPromise = Singleton.instance;
 
-export default clientPromise;
+export default Database;
