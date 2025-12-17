@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { useStore } from '@/store/useStore';
+import { useJobsStore } from '@/store/jobsStore';
 import { Job } from '@/types';
 import { 
   Calendar, 
@@ -18,18 +18,26 @@ import {
 import { toast } from 'sonner';
 
 export function JobsManager() {
-  const { jobs, fetchJobs, cancelJob, toggleJobStatus, fetchJobStats } = useStore();
+  const { jobs, loading, stats, fetchJobs, cancelJob, toggleJobStatus, fetchJobStats } = useJobsStore();
   const [localJobs, setLocalJobs] = useState<Job[]>([]);
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   useEffect(() => {
-    fetchJobs();
-    fetchJobStats();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!hasInitialized) {
+      fetchJobs();
+      fetchJobStats();
+      setHasInitialized(true);
+    }
+  }, []);
 
   useEffect(() => {
-    setLocalJobs(jobs.jobs);
-  }, [jobs.jobs]);
-
+    // Ensure jobs is an array before setting
+    if (Array.isArray(jobs)) {
+      setLocalJobs(jobs);
+    } else {
+      setLocalJobs([]);
+    }
+  }, [jobs]);
   const handleToggleStatus = async (jobId: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
     
@@ -83,62 +91,62 @@ export function JobsManager() {
   const getFrequencyColor = (frequency: string) => {
     switch (frequency) {
       case 'daily':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200 dark:border-green-800';
       case 'weekly':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-800';
       case 'monthly':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:border-purple-800';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-800';
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Statistics Cards */}
-      {jobs.stats && (
+      {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-4">
+          <Card className="p-4 border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100">
-                <Settings className="h-5 w-5 text-blue-600" />
+              <div className="p-3 rounded-xl bg-white/50 dark:bg-white/10 backdrop-blur">
+                <Settings className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Jobs</p>
-                <p className="text-2xl font-bold">{jobs.stats.total}</p>
+                <p className="text-sm text-blue-600/70 dark:text-blue-400/70 font-medium">Total Jobs</p>
+                <p className="text-3xl font-bold text-blue-900 dark:text-blue-100">{stats.total}</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100">
-                <Play className="h-5 w-5 text-green-600" />
+              <div className="p-3 rounded-xl bg-white/50 dark:bg-white/10 backdrop-blur">
+                <Play className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold">{jobs.stats.active}</p>
+                <p className="text-sm text-green-600/70 dark:text-green-400/70 font-medium">Active</p>
+                <p className="text-3xl font-bold text-green-900 dark:text-green-100">{stats.active}</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gray-100">
-                <Pause className="h-5 w-5 text-gray-600" />
+              <div className="p-3 rounded-xl bg-white/50 dark:bg-white/10 backdrop-blur">
+                <Pause className="h-5 w-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Inactive</p>
-                <p className="text-2xl font-bold">{jobs.stats.inactive}</p>
+                <p className="text-sm text-amber-600/70 dark:text-amber-400/70 font-medium">Inactive</p>
+                <p className="text-3xl font-bold text-amber-900 dark:text-amber-100">{stats.inactive}</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100">
-                <TrendingUp className="h-5 w-5 text-purple-600" />
+              <div className="p-3 rounded-xl bg-white/50 dark:bg-white/10 backdrop-blur">
+                <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">This Month</p>
-                <p className="text-2xl font-bold">{jobs.stats.byFrequency.monthly || 0}</p>
+                <p className="text-sm text-purple-600/70 dark:text-purple-400/70 font-medium">This Month</p>
+                <p className="text-3xl font-bold text-purple-900 dark:text-purple-100">{stats.byFrequency?.monthly || 0}</p>
               </div>
             </div>
           </Card>
@@ -157,7 +165,7 @@ export function JobsManager() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {jobs.loading ? (
+          {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
               <p className="mt-4 text-muted-foreground">Loading jobs...</p>
@@ -170,13 +178,13 @@ export function JobsManager() {
             </div>
           ) : (
             <div className="space-y-4">
-              {localJobs.map((job) => (
+              {Array.isArray(localJobs) && localJobs.map((job) => (
                 <div
                   key={job._id}
                   className={`p-4 rounded-lg border transition-all ${
                     job.isActive 
-                      ? 'border-green-200 bg-green-50/50' 
-                      : 'border-gray-200 bg-gray-50/50'
+                      ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20' 
+                      : 'border-gray-200 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-900/20'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -212,7 +220,7 @@ export function JobsManager() {
                         <Switch
                           checked={job.isActive}
                           onCheckedChange={() => handleToggleStatus(job._id, job.isActive)}
-                          disabled={jobs.loading}
+                          disabled={loading}
                         />
                       </div>
                       <Button

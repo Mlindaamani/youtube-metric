@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useStore } from '@/store/useStore';
+import { useChannelStore } from '@/store/channelStore';
 import { ChannelInfo } from '@/types';
 import { Eye, Users, Video, Pencil, Check, X, Camera } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,7 +14,7 @@ interface ChannelCardProps {
 const StatItem = ({ icon: Icon, value, label }: { icon: React.ElementType; value: string | number; label: string }) => {
   const numValue = typeof value === 'string' ? parseInt(value, 10) || 0 : value;
   return (
-    <div className="flex flex-col items-center p-3 sm:p-4 rounded-xl bg-secondary/50 transition-all duration-200 hover:bg-secondary min-w-0">
+    <div className="flex flex-col items-center p-3 sm:p-4 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 transition-all duration-200 hover:shadow-md dark:hover:shadow-lg min-w-0 border border-slate-200 dark:border-slate-700">
       <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-brand mb-1 sm:mb-2" />
       <span className="text-lg sm:text-2xl font-bold text-foreground truncate">{numValue.toLocaleString()}</span>
       <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider text-center">{label}</span>
@@ -27,7 +27,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
   const [customName, setCustomName] = useState(channel.customName || channel.title);
   const [logoUrl, setLogoUrl] = useState(channel.thumbnailUrl || channel.liveStats?.thumbnailUrl || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { updateChannel } = useStore();
+  const { updateChannel } = useChannelStore();
 
   const handleSave = async () => {
     try {
@@ -62,8 +62,8 @@ export function ChannelCard({ channel }: ChannelCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden animate-slide-up border-brand/20 bg-card/50 backdrop-blur-sm">
-      <div className="gradient-hero h-20 sm:h-24" />
+    <Card className="overflow-hidden animate-slide-up border-brand/20 bg-gradient-to-br from-card to-card/80 dark:from-slate-950 dark:to-slate-900/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-shadow">
+      <div className="gradient-hero h-20 sm:h-24 bg-gradient-to-r from-blue-500 via-purple-500 to-brand" />
       <CardContent className="relative pt-0 px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-end gap-3 sm:gap-4 -mt-10 sm:-mt-12">
           <div className="relative group">

@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { generateReport, getAllReports } from "@/modules/report/report.service.ts";
+import { generateReport, getAllReports, deleteReport as deleteReportService } from "@/modules/report/report.service.ts";
 import Report from "@/modules/report/report.model.ts";
 
 export const createReport = async (req: Request, res: Response) => {
@@ -72,5 +72,32 @@ export const downloadReport = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Download report error:', error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const deleteReport = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Report ID is required"
+      });
+    }
+    
+    const result = await deleteReportService(id);
+    
+    res.json({
+      success: true,
+      message: "Report deleted successfully",
+      data: result
+    });
+  } catch (err: any) {
+    console.error('Delete report error:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message || "Failed to delete report"
+    });
   }
 };

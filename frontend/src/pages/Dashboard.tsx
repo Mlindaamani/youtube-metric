@@ -1,26 +1,23 @@
 import { useEffect } from 'react';
-import { useStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/authStore';
+import { useChannelStore } from '@/store/channelStore';
+import { useReportsStore } from '@/store/reportsStore';
 import { Navbar } from '@/components/Navbar';
 import { ChannelCard } from '@/components/ChannelCard';
-import { ReportGenerationForm } from '@/components/ReportGenerationForm';
-import { ReportsTable } from '@/components/ReportsTable';
-import { JobsManager } from '@/components/JobsManager';
+import { DashboardHeader } from '@/components/DashboardHeader';
+import { DashboardTabs } from '@/components/DashboardTabs';
 
 export default function Dashboard() {
-  const { 
-    auth, 
-    channel, 
-    reports, 
-    fetchChannelInfo, 
-    fetchReports 
-  } = useStore();
+  const { isAuthenticated } = useAuthStore();
+  const { current: channel, fetchChannelInfo } = useChannelStore();
+  const { reports, fetchReports } = useReportsStore();
 
   useEffect(() => {
-    if (auth.isAuthenticated) {
+    if (isAuthenticated) {
       fetchChannelInfo();
       fetchReports();
     }
-  }, [auth.isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -33,41 +30,21 @@ export default function Dashboard() {
         <Navbar />
         
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="max-w-5xl mx-auto space-y-6">
+          <div className="max-w-6xl mx-auto space-y-8">
             {/* Page header */}
-            <div className="animate-fade-in">
-              <h1 className="text-3xl font-bold text-foreground">
-                <span className="text-brand">Dashboard</span>
-              </h1>
-              <p className="text-muted-foreground mt-1">Monitor your YouTube channel performance and generate reports</p>
-            </div>
+            <DashboardHeader />
 
             {/* Channel Overview */}
-            {channel.current ? (
-              <ChannelCard channel={channel.current} />
-            ) : channel.loading ? (
-              <div className="animate-pulse bg-card/50 backdrop-blur-sm rounded-2xl h-48 border border-brand/20" />
+            {channel ? (
+              <ChannelCard channel={channel} />
             ) : (
               <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-8 border border-brand/20 text-center">
                 <p className="text-muted-foreground">No channel connected</p>
               </div>
             )}
 
-            {/* Report Generation & Jobs Management */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              <ReportGenerationForm />
-              <JobsManager />
-            </div>
-
-            {/* Reports History */}
-            <div className="lg:col-span-2">
-              <ReportsTable reports={reports.reports} />
-            </div>
-
-            {/* Jobs Management */}
-            <div className="animate-slide-up" style={{ animationDelay: '0.3s' }}>
-              <JobsManager />
-            </div>
+            {/* Dashboard Tabs */}
+            <DashboardTabs reports={reports} />
           </div>
         </main>
       </div>

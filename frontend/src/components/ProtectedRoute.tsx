@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/authStore';
 import { Radio } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -8,15 +8,16 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { auth, checkAuth } = useStore();
+  const { isAuthenticated, loading, checkAuth } = useAuthStore();
   const location = useLocation();
 
   useEffect(() => {
+    // Only check auth once when component mounts or if not authenticated
     checkAuth();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Show loading state while checking authentication
-  if (auth.loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -28,7 +29,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // Redirect to login if not authenticated
-  if (!auth.isAuthenticated) {
+  if (!isAuthenticated) {
     // Save the attempted location so we can redirect back after login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

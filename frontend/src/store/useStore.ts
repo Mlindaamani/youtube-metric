@@ -68,10 +68,17 @@ export const useStore = create<StoreState>()(
         loading: false,
         error: null,
         creating: false,
+        statsLastFetched: undefined,
       },
 
       // Auth actions
       checkAuth: async () => {
+        // Prevent duplicate calls if already loading
+        const currentState = get();
+        if (currentState.auth.loading) {
+          return;
+        }
+        
         try {
           set(state => ({ auth: { ...state.auth, loading: true } }));
           const authStatus = await authAPI.getStatus();
@@ -130,6 +137,7 @@ export const useStore = create<StoreState>()(
               loading: false,
               error: null,
               creating: false,
+              statsLastFetched: undefined,
             },
           }));
           toast.success('Logged out successfully');
@@ -332,6 +340,12 @@ export const useStore = create<StoreState>()(
 
       // Jobs actions
       fetchJobs: async () => {
+        // Prevent duplicate calls if already loading
+        const currentState = get();
+        if (currentState.jobs.loading) {
+          return;
+        }
+        
         try {
           set(state => ({ jobs: { ...state.jobs, loading: true, error: null } }));
           const jobs = await jobAPI.getAll();
@@ -416,12 +430,21 @@ export const useStore = create<StoreState>()(
       },
 
       fetchJobStats: async () => {
+        // Only fetch if we don't have recent stats (cache for 30 seconds)
+        const currentState = get();
+        const lastStatsTime = currentState.jobs.statsLastFetched;
+        const now = Date.now();
+        if (lastStatsTime && (now - lastStatsTime) < 30000) {
+          return;
+        }
+        
         try {
           const stats = await jobAPI.getStats();
           set(state => ({ 
             jobs: { 
               ...state.jobs, 
-              stats 
+              stats,
+              statsLastFetched: now
             } 
           }));
         } catch (error: any) {

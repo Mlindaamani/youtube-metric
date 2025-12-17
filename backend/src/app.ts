@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import session from 'express-session';
 import passport from 'passport';
+import MongoStore from 'connect-mongo';
 import authRoutes from '@/modules/auth/auth.routes.ts';
 import channelRoutes from '@/modules/channel/channel.routes.ts';
 import reportRoutes from '@/modules/report/report.routes.ts';
@@ -14,14 +15,14 @@ const app = express();
 
 // Add morgan logging for development
 if (config.environment === 'development') {
-  app.use(morgan('combined'));
+  app.use(morgan('dev'));
 }
 
 // CORS configuration
 app.use(cors({
   origin: config.frontendUrl,
   credentials: true, 
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -29,8 +30,12 @@ app.use(express.json());
 app.use(
   session({
     secret: config.sessionSecret,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
+    store: MongoStore.create({
+      mongoUrl: config.mongoUri,
+      touchAfter: 24 * 3600, // Lazy session update (in seconds)
+    }),
     cookie: {
       secure: config.environment === 'production',
       httpOnly: true,

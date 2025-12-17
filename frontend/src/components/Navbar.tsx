@@ -1,10 +1,13 @@
 import { Button } from '@/components/ui/button';
-import { useStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/authStore';
+import { useChannelStore } from '@/store/channelStore';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Radio } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Navbar() {
-  const { channel, logout } = useStore();
+  const { current: channel } = useChannelStore();
+  const { logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -22,13 +25,14 @@ export function Navbar() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">Thinker<span className="text-brand">&</span>Builder</h1>
-              {channel.current && (
-                <p className="text-xs text-muted-foreground">{channel.current.customName || channel.current.title}</p>
+              {channel && (
+                <p className="text-xs text-muted-foreground">{channel.customName || channel.title}</p>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Button variant="ghost" onClick={handleLogout} className="gap-2">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Logout</span>

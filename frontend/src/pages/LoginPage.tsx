@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useStore } from '@/store/useStore';
+import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/lib/api';
 import { Radio, BarChart3, FileText, Zap, Loader2 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -14,7 +14,7 @@ const features = [
 ];
 
 export default function LoginPage() {
-  const { auth, checkAuth } = useStore();
+  const { isAuthenticated, loading, checkAuth } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -24,20 +24,20 @@ export default function LoginPage() {
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
 
   useEffect(() => {
-    if (!auth.loading && auth.isAuthenticated) {
+    if (!loading && isAuthenticated) {
       navigate(from, { replace: true });
     }
-  }, [auth.isAuthenticated, auth.loading, navigate, from]);
+  }, [isAuthenticated, loading, navigate, from]);
 
   const handleLogin = () => {
     setIsRedirecting(true);
     window.location.href = authApi.getGoogleAuthUrl();
   };
 
-  if (auth.loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse">

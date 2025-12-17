@@ -166,4 +166,5 @@ export interface JobsState {
   loading: boolean;
   error: string | null;
   creating: boolean;
+  statsLastFetched?: number;
 }

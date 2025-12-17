@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useStore } from "@/store/useStore";
+import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Radio, ChartLine, FileText, Zap, ArrowRight } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
-  const { auth, checkAuth } = useStore();
+  const { isAuthenticated, loading, checkAuth } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,16 +14,16 @@ const Index = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!auth.loading) {
-      if (auth.isAuthenticated) {
+    if (!loading) {
+      if (isAuthenticated) {
         navigate("/dashboard");
       } else {
         navigate("/login");
       }
     }
-  }, [auth.isAuthenticated, auth.loading, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
-  if (auth.loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -77,11 +77,11 @@ const Index = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in"
             style={{ animationDelay: "0.3s" }}
           >
-            <Button size="lg" onClick={() => navigate(auth.isAuthenticated ? "/dashboard" : "/login")} className="group">
-              {auth.isAuthenticated ? "Go to Dashboard" : "Get Started"}
+            <Button size="lg" onClick={() => navigate(isAuthenticated ? "/dashboard" : "/login")} className="group">
+              {isAuthenticated ? "Go to Dashboard" : "Get Started"}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-            {auth.isAuthenticated && (
+            {isAuthenticated && (
               <Button variant="outline" size="lg" onClick={() => navigate("/dashboard")}>
                 View Reports
               </Button>

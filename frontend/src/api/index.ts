@@ -40,10 +40,12 @@ api.interceptors.response.use(
     
     // Handle different error types
     if (error.response?.status === 401) {
-      // Unauthorized - clear auth state
-      localStorage.removeItem('token');
-      toast.error('Session expired. Please login again.');
-      window.location.href = '/login';
+      // Only redirect to login if it's an auth endpoint failure
+      // For other endpoints, just reject and let the caller handle it
+      if (error.config?.url?.includes('/auth/status')) {
+        localStorage.removeItem('token');
+        // Don't redirect immediately, let the store handle it
+      }
     } else if (error.response?.status === 403) {
       toast.error('Access forbidden');
     } else if (error.response?.status === 404) {

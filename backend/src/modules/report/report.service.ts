@@ -44,3 +44,30 @@ export const generateReport = async (options: {
 
 export const getAllReports = async () =>
   Report.find().sort({ generatedAt: -1 });
+
+export const deleteReport = async (reportId: string) => {
+  const report = await Report.findById(reportId);
+  
+  if (!report) {
+    throw new Error("Report not found");
+  }
+
+  // Delete the file from disk if it exists
+  const fs = await import('fs');
+  const path = await import('path');
+  
+  try {
+    if (report.filePath && fs.existsSync(report.filePath)) {
+      fs.unlinkSync(report.filePath);
+      console.log('Report file deleted:', report.filePath);
+    }
+  } catch (error) {
+    console.error('Error deleting report file:', error);
+    // Continue with database deletion even if file deletion fails
+  }
+
+  // Delete the report document from database
+  await Report.findByIdAndDelete(reportId);
+  
+  return { message: "Report deleted successfully" };
+};

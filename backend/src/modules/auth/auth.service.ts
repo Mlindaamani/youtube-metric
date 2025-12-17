@@ -5,14 +5,14 @@ export const registerOrUpdateChannel = async (
   refreshToken: string
 ) => {
   if (!refreshToken) {
-    throw new Error('Refresh token is required but not provided by Google. Please revoke app permissions in Google Account settings and try again.');
+    throw new Error(
+      "Refresh token is required but not provided by Google. Please revoke app permissions in Google Account settings and try again."
+    );
   }
 
   const channelId = profile.id;
 
   let channel = await Channel.findOne({ channelId });
-  console.log('Channel found:', channel);
-  console.log('Refresh token received:', refreshToken ? 'Yes' : 'No');
 
   if (channel) {
     channel.refreshToken = refreshToken;
