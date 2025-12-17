@@ -4,7 +4,7 @@ import { createReport, downloadReport, listReports } from "@/modules/report/repo
 
 
 const router = express.Router();
-// router.use(authMiddleware);
+router.use(authMiddleware);
 
 router.post("/generate", createReport);
 router.get("/", listReports);

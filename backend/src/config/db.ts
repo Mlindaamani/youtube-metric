@@ -1,24 +1,31 @@
-import mongoose from 'mongoose';
-import { config } from './index.ts';
+import { MongoClient } from "mongodb";
+import { config } from "@/config/index.ts";
 
+const uri = config.mongoUri;
 
-export const connectDB = async (): Promise<void> => {
-  try {
-    await mongoose.connect(config.mongoUri);
+declare global {
+  var _mongoClientPromise: Promise<MongoClient>;
+}
 
-    console.log('MongoDB connected successfully');
-  } catch (error: any) {
-    console.error('MongoDB connection error:', error.message);
-    process.exit(1);
+class Singleton {
+  private static _instance: Singleton;
+  private client: MongoClient;
+  private clientPromise: Promise<MongoClient>;
+  private constructor() {
+    this.client = new MongoClient(uri);
+    this.clientPromise = this.client.connect();
+    if (config.environment === "development") {
+      global._mongoClientPromise = this.clientPromise;
+    }
   }
-};
 
-// Optional: Graceful shutdown
-export const disconnectDB = async (): Promise<void> => {
-  try {
-    await mongoose.disconnect();
-    console.log('MongoDB disconnected');
-  } catch (error: any) {
-    console.error('Error disconnecting from MongoDB:', error.message);
+  public static get instance() {
+    if (!this._instance) {
+      this._instance = new Singleton();
+    }
+    return this._instance.clientPromise;
   }
-};
+}
+const clientPromise = Singleton.instance;
+
+export default clientPromise;

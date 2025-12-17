@@ -23,6 +23,7 @@
     "express": "^5.2.1",
     "express-session": "^1.18.2",
     "googleapis": "^168.0.0",
+    "mongodb": "^7.0.0",
     "mongoose": "^9.0.1",
     "node-cron": "^4.2.1",
     "passport": "^0.7.0",

@@ -22,6 +22,6 @@ app.use(passport.session());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/channel', channelRoutes);
-app.use('/api/report', reportRoutes);
+app.use('/api/reports', reportRoutes);
 
 export default app;

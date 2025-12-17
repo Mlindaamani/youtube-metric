@@ -13,3 +13,4 @@ export const config = {
   sessionSecret: process.env.SESSION_SECRET!,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 };
+
