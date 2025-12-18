@@ -5,7 +5,7 @@ export const createCorsConfig = () => {
   const frontendUrl = process.env.FRONTEND_URL;
   
   return cors({
-    origin: environment === 'production' ? frontendUrl : 'http://localhost:3000',
+    origin: environment === 'production' ? frontendUrl : 'http://localhost:8080',
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']

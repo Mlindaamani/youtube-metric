@@ -72,7 +72,6 @@ export const downloadReport = async (req: Request, res: Response) => {
 
       // Send the file buffer
       res.send(fileBuffer);
-      console.log("File sent successfully:", filename);
     } catch (fileError) {
       console.error("Error reading file:", fileError);
       return res.status(500).json({ message: "Error reading report file" });
