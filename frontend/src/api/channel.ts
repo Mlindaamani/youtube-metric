@@ -1,10 +1,10 @@
-import api from './index';
-import { ApiResponse, ChannelInfo, Channel } from '../types';
+import api from "./index";
+import { ApiResponse, ChannelInfo, Channel } from "../types";
 
 export const channelAPI = {
   // Get channel information with live stats
   getInfo: async (): Promise<ChannelInfo> => {
-    const response = await api.get<ApiResponse<ChannelInfo>>('/channel/info');
+    const response = await api.get<ApiResponse<ChannelInfo>>("/channel/info");
     return response.data.data!;
   },
 
@@ -17,18 +17,27 @@ export const channelAPI = {
     refreshToken: string;
     customName?: string;
   }): Promise<Channel> => {
-    const response = await api.post<ApiResponse<Channel>>('/channel', channelData);
+    const response = await api.post<ApiResponse<Channel>>(
+      "/channel",
+      channelData
+    );
     return response.data.data!;
   },
 
   // Update channel information
-  updateChannel: async (channelId: string, updateData: {
-    title?: string;
-    description?: string;
-    thumbnailUrl?: string;
-    customName?: string;
-  }): Promise<Channel> => {
-    const response = await api.put<ApiResponse<Channel>>(`/channel/${channelId}`, updateData);
+  updateChannel: async (
+    channelId: string,
+    updateData: {
+      title?: string;
+      description?: string;
+      thumbnailUrl?: string;
+      customName?: string;
+    }
+  ): Promise<Channel> => {
+    const response = await api.put<ApiResponse<Channel>>(
+      `/channel/${channelId}`,
+      updateData
+    );
     return response.data.data!;
   },
 

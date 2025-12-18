@@ -1,5 +1,5 @@
 import api from './index';
-import { ApiResponse, AuthState } from '../types';
+import { AuthState } from '../types';
 
 export const authAPI = {
   // Get authentication status
