@@ -14,9 +14,8 @@ import { config } from '@/config/index.ts';
 const app = express();
 
 // Add morgan logging for development
-if (config.environment === 'development') {
   app.use(morgan('dev'));
-}
+
 
 // CORS configuration
 app.use(cors({
