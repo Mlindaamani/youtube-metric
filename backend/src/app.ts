@@ -18,8 +18,24 @@ const app = express();
 
 
 // CORS configuration
+const allowedOrigins = [
+  config.frontendUrl,
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+  // Add your Vercel frontend URL here once deployed
+].filter(Boolean);
+
 app.use(cors({
-  origin: config.frontendUrl,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true, 
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

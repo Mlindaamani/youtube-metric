@@ -2,8 +2,20 @@
 
 A comprehensive YouTube analytics and reporting platform built with modern web technologies. Generate detailed insights about your YouTube channel performance, schedule automated reports, and track key metrics over time.
 
-## 📋 Table of Contents
+## � Quick Deployment to Vercel
 
+This app is ready for deployment to Vercel! See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+
+**Quick Steps:**
+1. Push code to GitHub
+2. Import to Vercel
+3. Set environment variables (see DEPLOYMENT.md)
+4. Update Google OAuth settings
+5. Deploy!
+
+## �📋 Table of Contents
+
+- [Quick Deployment](#-quick-deployment-to-vercel)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)

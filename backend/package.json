@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
+    "build": "tsc && tsc-alias",
+    "start": "node dist/server.js",
+    "vercel-build": "tsc && tsc-alias",
+    "postinstall": "tsc && tsc-alias"
   },
   "keywords": [],
   "author": "",
@@ -43,6 +45,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
     "ts-node-dev": "^2.0.0",
+    "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"

@@ -1,0 +1,27 @@
+# Vercel ignore file
+node_modules
+.env
+.env.local
+.env.*.local
+dist
+build
+*.log
+.DS_Store
+.vscode
+.git
+
+# Development files
+backend/reports/
+*.dev.js
+*.test.js
+*.spec.js
+coverage/
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+Thumbs.db
