@@ -11,6 +11,12 @@ export const config = {
     redirectUri: process.env.GOOGLE_REDIRECT_URI!,
   },
   sessionSecret: process.env.SESSION_SECRET!,
-  frontendUrl: process.env.FRONTEND_URL
+  frontendUrl: process.env.FRONTEND_URL,
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+    apiKey: process.env.CLOUDINARY_API_KEY!,
+    apiSecret: process.env.CLOUDINARY_API_SECRET!,
+    reportsFolder: process.env.CLOUDINARY_REPORTS_FOLDER || 'reports',
+  },
 };
 

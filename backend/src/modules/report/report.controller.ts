@@ -5,11 +5,11 @@ import {
   deleteReport as deleteReportService,
 } from "@/modules/report/report.service.ts";
 import Report from "@/modules/report/report.model.ts";
+import { storageService } from '@/services/storageService.ts';
+import { ReportManager } from '@/utils/reportManager.ts';
 
 export const createReport = async (req: Request, res: Response) => {
   try {
-    console.log("Report generation request:", req.body);
-
     const { period = "lifetime", generatedBy = "manual" } = req.body;
 
     const report = await generateReport({
@@ -43,21 +43,15 @@ export const downloadReport = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Report not found" });
     }
 
-    console.log("Attempting to download file:", report.filePath);
-
-    // Check if file exists
-    const fs = await import("fs");
-    const path = await import("path");
-
-    if (!fs.existsSync(report.filePath)) {
-      console.error("File not found at path:", report.filePath);
-      return res.status(404).json({ message: "Report file not found" });
-    }
-
-    // Read file and send as buffer instead of using res.download()
     try {
-      const fileBuffer = fs.readFileSync(report.filePath);
-      const filename = path.basename(report.filePath);
+      // Use storage service to retrieve the document
+      const fileBuffer = await storageService.retrieveDocument(
+        report.filePath,
+        report.publicId || undefined
+      );
+
+      // Use the stored filename or fallback to a generated one
+      const filename = report.filename || `report-${report._id}.docx`;
 
       // Set proper headers for file download
       res.setHeader(
@@ -105,6 +99,39 @@ export const deleteReport = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: err.message || "Failed to delete report",
+    });
+  }
+};
+
+export const getStorageStats = async (req: Request, res: Response) => {
+  try {
+    const stats = await ReportManager.getStorageStats();
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    console.error('Get storage stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get storage statistics',
+    });
+  }
+};
+
+export const cleanupReports = async (req: Request, res: Response) => {
+  try {
+    const result = await ReportManager.cleanupOrphanedReports();
+    res.json({
+      success: true,
+      message: 'Cleanup completed successfully',
+      data: result,
+    });
+  } catch (error) {
+    console.error('Cleanup reports error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cleanup reports',
     });
   }
 };

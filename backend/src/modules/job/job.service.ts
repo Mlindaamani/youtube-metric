@@ -163,7 +163,6 @@ class JobService {
    */
   private async executeJob(job: IJob): Promise<void> {
     try {
-      console.log(`Executing job: ${job.name} for user: ${job.userId}`);
 
       // Update run count and last run
       await Job.updateOne(
@@ -200,9 +199,6 @@ class JobService {
 
       // Generate the report
       const report = await generateReport(reportParams);
-      console.log(
-        `Report generated successfully for job: ${job.name} - Report ID: ${report._id}`
-      );
     } catch (error) {
       console.error(`Error generating report for job ${job._id}:`, error);
     }

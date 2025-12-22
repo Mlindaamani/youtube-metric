@@ -82,10 +82,7 @@ export const useStore = create<StoreState>()(
         try {
           set(state => ({ auth: { ...state.auth, loading: true } }));
           const authStatus = await authAPI.getStatus();
-          // Only log once per session to prevent spam
-          if (!get().auth.isAuthenticated && authStatus.isAuthenticated) {
-            console.log('Authentication successful:', authStatus);
-          }
+
           set(state => ({ 
             auth: { 
               ...state.auth, 

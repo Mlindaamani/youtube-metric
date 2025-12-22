@@ -4,6 +4,7 @@ import { getChannelAnalytics } from '@/modules/youtube/youtube.api.ts';
 import { generateCharts } from '@/utils/chartGenerator.ts';
 import { generateDocxReport } from '@/modules/report/report.generator.ts';
 import { generateInsights } from '@/modules/report/insights.engine.ts';
+import { storageService } from '@/services/storageService.ts';
 
 
 export const generateReport = async (options: {
@@ -19,7 +20,7 @@ export const generateReport = async (options: {
   );
   const charts = await generateCharts(analytics);
   const insights = generateInsights(analytics);
-  const filePath = await generateDocxReport(
+  const reportResult = await generateDocxReport(
     channel.customName || channel.title,
     analytics,
     charts,
@@ -33,7 +34,10 @@ export const generateReport = async (options: {
       year: "numeric",
     })}`,
     period: options.period,
-    filePath,
+    filePath: reportResult.filePath,
+    url: reportResult.url,
+    publicId: reportResult.publicId,
+    filename: reportResult.filename,
     insights,
     generatedBy: options.generatedBy,
   });
@@ -52,15 +56,9 @@ export const deleteReport = async (reportId: string) => {
     throw new Error("Report not found");
   }
 
-  // Delete the file from disk if it exists
-  const fs = await import('fs');
-  const path = await import('path');
-  
+  // Delete the file using storage service
   try {
-    if (report.filePath && fs.existsSync(report.filePath)) {
-      fs.unlinkSync(report.filePath);
-      console.log('Report file deleted:', report.filePath);
-    }
+    await storageService.deleteDocument(report.filePath, report.publicId || undefined);
   } catch (error) {
     console.error('Error deleting report file:', error);
     // Continue with database deletion even if file deletion fails

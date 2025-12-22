@@ -3,6 +3,16 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useJobsStore } from '@/store/jobsStore';
 import { Job } from '@/types';
 import { 
@@ -13,7 +23,8 @@ import {
   Trash2, 
   TrendingUp,
   Activity,
-  Settings
+  Settings,
+  AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,6 +32,9 @@ export function JobsManager() {
   const { jobs, loading, stats, fetchJobs, cancelJob, toggleJobStatus, fetchJobStats } = useJobsStore();
   const [localJobs, setLocalJobs] = useState<Job[]>([]);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hasInitialized) {
@@ -60,14 +74,25 @@ export function JobsManager() {
     }
   };
 
-  const handleCancelJob = async (jobId: string) => {
-    if (window.confirm('Are you sure you want to cancel this scheduled job?')) {
-      try {
-        await cancelJob(jobId);
-        toast.success('Job cancelled successfully');
-      } catch (error) {
-        toast.error('Failed to cancel job');
-      }
+  const handleCancelJob = async (id: string) => {
+    setJobToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!jobToDelete) return;
+
+    setDeletingId(jobToDelete);
+    try {
+      await cancelJob(jobToDelete);
+      toast.success('Job cancelled successfully');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      toast.error('Failed to cancel job');
+    } finally {
+      setDeletingId(null);
+      setDeleteDialogOpen(false);
+      setJobToDelete(null);
     }
   };
 
@@ -227,9 +252,11 @@ export function JobsManager() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleCancelJob(job._id)}
+                        disabled={deletingId === job._id}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4" />
+                        {deletingId === job._id ? 'Cancelling...' : ''}
                       </Button>
                     </div>
                   </div>
@@ -239,6 +266,33 @@ export function JobsManager() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <AlertDialogTitle>Cancel Job</AlertDialogTitle>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogDescription className="text-foreground">
+            Are you sure you want to cancel this scheduled job? This action cannot be undone.
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deletingId === jobToDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deletingId === jobToDelete ? 'Cancelling...' : 'Cancel Job'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

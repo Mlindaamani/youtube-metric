@@ -7,23 +7,22 @@ import {
   AlignmentType,
   ImageRun,
 } from "docx";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { storageService } from '@/services/storageService.ts';
 import type { AnalyticsData } from "@/modules/youtube/youtube.types.ts";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Get the project root directory more reliably
-const projectRoot = process.cwd();
+interface ReportGenerationResult {
+  filePath: string;
+  url?: string | undefined;
+  publicId?: string | undefined;
+  filename: string;
+}
 
 export const generateDocxReport = async (
   channelTitle: string,
   data: AnalyticsData,
   charts: Buffer[],
   insights: string[]
-): Promise<string> => {
+): Promise<ReportGenerationResult> => {
   const doc = new Document({
     sections: [
       {
@@ -74,13 +73,14 @@ export const generateDocxReport = async (
     /\s+/g,
     "_"
   )}_${Date.now()}.docx`;
-  // Use absolute path from project root
-  const filePath = path.join(projectRoot, "reports", filename);
   
-  console.log('Generating report at:', filePath);
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, buffer);
+  // Use storage service instead of direct file system operations
+  const storageResult = await storageService.storeDocument(buffer, filename);
   
-  console.log('Report file created successfully');
-  return filePath;
+  return {
+    filePath: storageResult.filePath,
+    url: storageResult.url,
+    publicId: storageResult.publicId,
+    filename,
+  };
 };

@@ -23,7 +23,6 @@ export const getChannelAnalytics = async (
       // Remove problematic dimensions for now
     });
 
-    console.log('Analytics query result:', report.data);
 
     // Parse and aggregate – simplified for now
     const rows = report.data.rows || [];

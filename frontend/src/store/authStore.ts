@@ -44,11 +44,7 @@ export const useAuthStore = create<AuthStore>()(
         try {
           set({ loading: true, lastCheckTime: now });
           const authStatus = await authAPI.getStatus();
-          
-          // Only log on status change to prevent spam
-          if (!state.isAuthenticated && authStatus.isAuthenticated) {
-            console.log('Authentication successful');
-          }
+
           
           set({ 
             isAuthenticated: authStatus.isAuthenticated,
